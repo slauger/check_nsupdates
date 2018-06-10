@@ -31,7 +31,7 @@ class check_nsversion:
   ctx_pattern = 'New \- NetScaler Release( \(Feature Phase\)| \(Maintenance Phase\))? (1[012]\.[0-9]) Build ([0-9]{2}\.[0-9]{1,2})'
 
   # var nsversion="12,0,57,19";
-  ns_pattern = 'var nsversion="(1[012]),([0-9]),([0-9]{2}),([0-9]{2})";.*'
+  ns_pattern = '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{2})".*'
 
   # All major releases and latest available build per major version
   releases = {}
@@ -80,7 +80,7 @@ class check_nsversion:
     sys.exit(self.exitcode)
   
   def check(self, fqdn):
-    url = "https://" + fqdn + "/epa/epa.html"
+    url = "https://" + fqdn + "/vpn/pluginlist.xml"
     try:
       response = requests.get(url, verify=False)
     except:
