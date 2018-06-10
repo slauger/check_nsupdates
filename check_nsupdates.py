@@ -11,8 +11,8 @@
 # outside world in /epa/epa.html.
 # 
 # @author: Simon Lauger <simon@lauger.de>
-# @date:   2018-03-24
-# @version 1.0
+# @date:   2018-06-10
+# @version v1.1.0
 
 import re
 import sys
