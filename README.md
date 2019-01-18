@@ -8,7 +8,7 @@ To get the installed version of the NetScaler the plugin makes use of the fact t
 
 Example:
 ```
--bash$ curl -q https://gateway.example.com/vpn/pluginlist.xml 2> /dev/null | egrep '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{2})".*' 
+-bash$ curl -q https://gateway.example.com/vpn/pluginlist.xml 2> /dev/null | egrep '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{1,2})".*' 
 			version="12.1.48.13" 			path="/epa/scripts/win/nsepa_setup.exe"
 			version="12.1.48.13" 			path="/epa/scripts/win/nsepa_setup64.exe"
 			version="12.1.48.13" 			path="/vpns/scripts/vista/AGEE_setup.exe"
