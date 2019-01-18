@@ -31,7 +31,7 @@ class check_nsversion:
   ctx_pattern = 'New \- NetScaler Release( \(Feature Phase\)| \(Maintenance Phase\))? (1[012]\.[0-9]) Build ([0-9]{2}\.[0-9]{1,2})'
 
   # var nsversion="12,0,57,19";
-  ns_pattern = '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{2})".*'
+  ns_pattern = '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{1,2})".*'
 
   # All major releases and latest available build per major version
   releases = {}
