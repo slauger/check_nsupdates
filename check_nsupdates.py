@@ -19,6 +19,7 @@ import sys
 import feedparser
 import requests
 import urllib3
+from packaging import version
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -91,7 +92,7 @@ class check_nsversion:
       if matches:
         major = str(matches.group(1) + '.' + matches.group(2))
         build = str(matches.group(3) + '.' + matches.group(4))
-        if self.releases[major] == build:
+        if self.releases[major] == build or version.parse(self.releases[major]) < version.parse(build):
           self.add_message(self.return_codes['OK'], "OK: " + fqdn + ": up to date  (installed: " + major + " " + build + ", available: " + major + " " + self.releases[major] + ")")
           return self.return_codes['OK']
         else:

@@ -18,6 +18,7 @@ Example:
 
 - python-feedparser
 - python-requests
+- python-packaging
 
 ## Usage
 
