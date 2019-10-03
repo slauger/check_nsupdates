@@ -29,10 +29,12 @@ class check_nsversion:
 
   # New - NetScaler Release (Feature Phase) 12.0 Build 57.19
   # New - NetScaler Release (Maintenance Phase) 11.1 Build 57.11
-  ctx_pattern = 'New \- NetScaler Release( \(Feature Phase\)| \(Maintenance Phase\))? (1[012]\.[0-9]) Build ([0-9]{2}\.[0-9]{1,2})'
+  # New - Citrix ADC Release (Feature Phase) 13.0 Build 41.20
+  # New - Citrix ADC Release (Maintenance Phase) 12.1 Build 53.12
+  ctx_pattern = 'New \- (NetScaler|Citrix ADC) Release( \(Feature Phase\)| \(Maintenance Phase\))? (1[0123]\.[0-9]) Build ([0-9]{2}\.[0-9]{1,2})'
 
   # var nsversion="12,0,57,19";
-  ns_pattern = '.*version="(1[012])\.([0-9])\.([0-9]{2})\.([0-9]{1,2})".*'
+  ns_pattern = '.*version="(1[0123])\.([0-9])\.([0-9]{2})\.([0-9]{1,2})".*'
 
   # All major releases and latest available build per major version
   releases = {}
@@ -61,8 +63,9 @@ class check_nsversion:
     for item in self.feed['items']:
       matches = self.ctx_regex.match(item['title'])
       if matches:
-        if not matches.group(2) in self.releases:
-          self.releases[matches.group(2)] = matches.group(3)
+        if not matches.group(3) in self.releases:
+          self.releases[matches.group(3)] = matches.group(4)
+    print(self.releases)
 
   def get_relases(self, major = None):
     if major == None:
