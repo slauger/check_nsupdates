@@ -65,7 +65,6 @@ class check_nsversion:
       if matches:
         if not matches.group(3) in self.releases:
           self.releases[matches.group(3)] = matches.group(4)
-    print(self.releases)
 
   def get_relases(self, major = None):
     if major == None:
