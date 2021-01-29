@@ -1,5 +1,15 @@
 # check_nsupdates
 
+## Build 13.0 71.40/71.44 and above
+
+Since 13.0 Build 71.40/71.44 it is no longer possible to obtain the installed firmware version via the `pluginlist.xml`. It seems that the firmware does not appear in any other public file. So there is no longer an option for an external update monitoring.
+
+If you still need an external monitoring you could switch to a responder policy with a [HTTP callout](https://docs.citrix.com/en-us/citrix-adc/current-release/appexpert/http-callout/how-http-callouts-work.html) to the [nsversion](https://developer-docs.citrix.com/projects/citrix-adc-nitro-api-reference/en/latest/configuration/ns/nsversion/) API endpoint. Be aware that you need to connect to a SNIP with management access. An internal HTTP callout to to the NSIP will be dropped.
+
+The plugin will support this method soon.
+
+## Documentation
+
 Nagios Plugin which checks if an update is available for a Citrix NetScaler.
 
 The plugin connects to citrix.com and parses the [RSS feed](https://www.citrix.com/content/citrix/en_us/downloads/netscaler-adc.rss) to get a dict of all available NetScaler relases and the latest available build per release.
