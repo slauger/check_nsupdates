@@ -2,6 +2,8 @@
 #
 # check_nsupdates.py
 #
+# https://github.com/slauger/check_nsupdates
+#
 # Checks if there is an update available for a Citrix NetScaler.
 # The plugin parses the rss feed from citrix.com to get a list of
 # all available releases.
@@ -11,8 +13,7 @@
 # outside world in /epa/epa.html.
 # 
 # @author: Simon Lauger <simon@lauger.de>
-# @date:   2018-06-10
-# @version v1.1.0
+# @version master
 
 import os
 import re
