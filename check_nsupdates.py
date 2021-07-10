@@ -13,7 +13,7 @@
 # outside world in /epa/epa.html.
 # 
 # @author: Simon Lauger <simon@lauger.de>
-# @version master
+# @version v1.3.0
 
 import os
 import re
