@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # check_nsupdates.py
 #
@@ -14,11 +14,13 @@
 # @date:   2018-06-10
 # @version v1.1.0
 
+import os
 import re
 import sys
 import feedparser
 import requests
 import urllib3
+import argparse
 from packaging import version
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -33,8 +35,8 @@ class check_nsversion:
   # New - Citrix ADC Release (Maintenance Phase) 12.1 Build 53.12
   ctx_pattern = 'New \- (NetScaler|Citrix ADC) Release( \(Feature Phase\)| \(Maintenance Phase\))? (1[0123]\.[0-9]) Build ([0-9]{2}\.[0-9]{1,2})'
 
-  # var nsversion="12,0,57,19";
-  ns_pattern = '.*version="(1[0123])\.([0-9])\.([0-9]{2})\.([0-9]{1,2})".*'
+  # NetScaler NS13.0: Build 71.44.nc, Date: Dec 26 2020, 11:31:14   (64-bit)
+  ns_pattern = 'NetScaler NS(1[0123])\.([0-9]): Build ([0-9]{2})\.([0-9]{1,2}).*'
 
   # All major releases and latest available build per major version
   releases = {}
@@ -53,11 +55,26 @@ class check_nsversion:
   # plugin exitcode
   exitcode = 0
 
+  # debug mode
+  debug = False
+
   def __init__(self):
     self.feed  = feedparser.parse(self.ctx_url)
     self.ctx_regex = re.compile(self.ctx_pattern)
     self.ns_regex = re.compile(self.ns_pattern)
     self.parse()
+
+  def set_baseurl(self, baseurl):
+    self.baseurl = baseurl
+
+  def set_username(self, username):
+    self.username = username
+
+  def set_password(self, password):
+    self.password = password
+
+  def set_debug(self, value):
+    self.debug = bool(value)
 
   def parse(self):
     for item in self.feed['items']:
@@ -81,41 +98,113 @@ class check_nsversion:
     for message in self.messages:
       print(message)
     sys.exit(self.exitcode)
-  
-  def check(self, fqdn):
-    url = "https://" + fqdn + "/vpn/pluginlist.xml"
+
+  def check(self):
+    url = self.baseurl + "/nitro/v1/config/nsversion"
     try:
-      response = requests.get(url, verify=False)
-    except:
-      self.add_message(self.return_codes['CRITICAL'], "CRITICAL: " + fqdn + " is unreachable")
+      response = requests.get(url, verify=False, headers={
+        'X-NITRO-USER': self.username,
+        'X-NITRO-PASS': self.password,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      })
+    except Exception as e:
+      if self.debug:
+        print(e)
+      self.add_message(self.return_codes['CRITICAL'], "CRITICAL: http request to " + self.baseurl + " failed")
       return self.return_codes['CRITICAL']
-    for line in response.iter_lines():
-      matches = self.ns_regex.match(line)
-      if matches:
-        major = str(matches.group(1) + '.' + matches.group(2))
-        build = str(matches.group(3) + '.' + matches.group(4))
-        if self.releases[major] == build or version.parse(self.releases[major]) < version.parse(build):
-          self.add_message(self.return_codes['OK'], "OK: " + fqdn + ": up to date  (installed: " + major + " " + build + ", available: " + major + " " + self.releases[major] + ")")
-          return self.return_codes['OK']
-        else:
-          self.add_message(self.return_codes['WARNING'], "WARNING: " + fqdn + ": update available (installed: " + major + " " + build + ", available: " + major + " " + self.releases[major] + ")")
-          return self.return_codes['WARNING']
-    self.add_message(self.return_codes['UNKOWN'], "UNKOWN: " + fqdn + ": could not find a nsversion string in response")
+
+    if response.status_code != 200:
+      if self.debug:
+        print(response.text)
+      self.add_message(self.return_codes['CRITICAL'], "CRITICAL: http request to " + self.baseurl + " returned status code " + str(response.status_code))
+      return self.return_codes['CRITICAL']
+
+    version_str = response.json()['nsversion']['version']
+
+    matches = self.ns_regex.match(version_str)
+
+    major = str(matches.group(1) + '.' + matches.group(2))
+    build = str(matches.group(3) + '.' + matches.group(4))
+
+    if self.releases[major] == build or version.parse(self.releases[major]) < version.parse(build):
+      self.add_message(self.return_codes['OK'], "OK: " + self.baseurl + ": up to date  (installed: " + major + " " + build + ", available: " + major + " " + self.releases[major] + ")")
+      return self.return_codes['OK']
+    else:
+      self.add_message(self.return_codes['WARNING'], "WARNING: " + self.baseurl + ": update available (installed: " + major + " " + build + ", available: " + major + " " + self.releases[major] + ")")
+      return self.return_codes['WARNING']
+
+    self.add_message(self.return_codes['UNKOWN'], "UNKOWN: " + self.baseurl + ": could not find a nsversion string in response")
     return self.return_codes['UNKOWN']
 
-# check if a arugment is given to the script
-if len(sys.argv) < 2:
-  print("usage: " + sys.argv[0] + " <hostname> [<hostname>] [...]")
-  sys.exit(check_nsversion.return_codes['UNKOWN'])
+if __name__ == '__main__':
+  add_args = (
+    {
+      '--url': {
+        'alias': '-U',
+        'help': 'Base URL of the Citrix ADC. If not set the value from the ENV NETSCALER_URL is used.',
+        'type': str,
+        'default': None,
+        'required': True,
+      }
+    },
+    {
+      '--username': {
+        'alias': '-u',
+        'help': 'Username for Citrix ADC. If not set the value from the ENV NETSCALER_USERNAME is used. Defaults to nsroot.',
+        'type': str,
+        'default': os.environ.get('NETSCALER_USERNAME', 'nsroot'),
+        'required': False,
+      }
+    },
+    {
+      '--password': {
+        'alias': '-p',
+        'help': 'Password for Citrix ADC. If not set the value from the ENV NETSCALER_PASSWORD is used. Defaults to nsroot',
+        'type': str,
+        'default': os.environ.get('NETSCALER_PASSWORD', 'nsroot'),
+        'required': False,
+      }
+    }
+  )
 
-# start plugin and parse rss feed
-plugin = check_nsversion()
+  parser = argparse.ArgumentParser(description='Nagios Plugin which checks if an update is available for a Citrix ADC (formerly Citrix NetScaler)')
 
-# check all hosts
-for fqdn in sys.argv:
-  if fqdn == sys.argv[0]:
-    continue
-  plugin.check(fqdn)
+  for item in add_args:
+    arg    = list(item.keys())[0]
+    params = list(item.values())[0]
+    parser.add_argument(
+      params['alias'], arg,
+      type=params['type'],
+      help=params['help'],
+      default=params['default'],
+      required=params['required'],
+    )
 
-# exit and print results
-plugin.nagios_exit()
+  parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose mode and print the requests python response')
+
+  # parse args
+  args = parser.parse_args()
+
+  # start plugin and parse rss feed
+  plugin = check_nsversion()
+
+  # check for url
+  if not args.url:
+    plugin.add_message(3, 'netscaler url is not defined or empty')
+    plugin.nagios_exit()
+
+  # add args to class
+  plugin.set_baseurl(args.url)
+  plugin.set_username(args.username)
+  plugin.set_password(args.password)
+
+  # debug mode
+  if (args.verbose):
+    plugin.set_debug(True)
+
+  # run check
+  plugin.check()
+
+  # exit and print results
+  plugin.nagios_exit()
