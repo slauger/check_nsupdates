@@ -23,6 +23,7 @@ WARNING: http://10.0.0.240: update available (installed: 13.0 71.44, available: 
 
 # check with credentials given via cli
 ./check_nsupdates.py -U http://10.0.0.100 -u admin -p admin
+WARNING: http://10.0.0.240: update available (installed: 13.0 71.44, available: 13.0 82.42)
 
 # check with credentials given by ENV
 export NETSCALER_USERNAME=admin
